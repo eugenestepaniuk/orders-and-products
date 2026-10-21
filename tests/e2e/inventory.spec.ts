@@ -121,7 +121,15 @@ test('two tabs share the session counter and receive committed inventory changes
     exact: true,
   });
   await deleteButton.click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Cancel' }).click();
+  dialog = page.getByRole('dialog', {
+    name: 'Are you sure you want to delete this order?',
+    exact: true,
+  });
+  await expect(dialog.locator('.delete-summary__product')).toHaveCount(1);
+  await expect(dialog).toContainText('QA temporary product');
+  await expect(dialog).toContainText('SN-QA-TEMP-1');
+  await expect(dialog.locator('img')).toHaveAttribute('src', '/images/monitor.svg');
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(deleteButton).toBeVisible();
   await deleteButton.click();
   await page.getByRole('dialog').getByRole('button', { name: 'Delete', exact: true }).click();
@@ -129,6 +137,59 @@ test('two tabs share the session counter and receive committed inventory changes
   await expect(second.locator('.order-row')).toHaveCount(4);
   await second.close();
   await expect(page.getByTestId('session-count')).toHaveText('1');
+});
+
+test('row feedback fades in and out without moving content and supports keyboard focus', async ({
+  page,
+}, testInfo) => {
+  await login(page);
+  const order = page.getByRole('button', {
+    name: 'Open order: Поставка оборудования для рабочих мест',
+    exact: true,
+  });
+  const shadowOpacity = (row: typeof order) =>
+    row.evaluate((element) => getComputedStyle(element, '::after').opacity);
+
+  for (const selector of ['.order-row', '.detail-products__row', '.product-row']) {
+    if (selector === '.detail-products__row') await order.click();
+    if (selector === '.product-row') await page.goto('/en/products');
+    await page.mouse.move(0, 0);
+    const row = page.locator(selector).first();
+    await row.hover({ trial: true });
+    const bounds = await row.boundingBox();
+    await row.hover();
+    await expect.poll(() => shadowOpacity(row)).toBe('1');
+    expect(await row.boundingBox()).toEqual(bounds);
+    await page.screenshot({ path: testInfo.outputPath(`${selector.slice(1)}-hover.png`) });
+    await page.mouse.move(0, 0);
+    await expect.poll(() => shadowOpacity(row)).toBe('0');
+  }
+
+  const product = page.locator('.product-row').first();
+  await product.getByRole('link').focus();
+  await expect.poll(() => shadowOpacity(product)).toBe('1');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(
+    await product.evaluate((element) => getComputedStyle(element, '::after').transitionDuration),
+  ).toBe('0s');
+});
+
+test('an empty order confirmation names the order and Escape cancels deletion', async ({
+  page,
+}) => {
+  await login(page);
+  const deleteButton = page.getByRole('button', {
+    name: 'Delete: Приход без продуктов',
+    exact: true,
+  });
+  await deleteButton.click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.locator('.delete-summary__empty')).toHaveText('Приход без продуктов');
+  await expect(dialog.locator('.delete-summary__product')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+  await expect(deleteButton).toBeFocused();
+  await expect(page.locator('.order-row')).toHaveCount(4);
 });
 
 test('analytics runs the worker, loads the map on demand and switches language', async ({

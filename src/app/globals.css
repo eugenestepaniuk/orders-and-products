@@ -11,6 +11,7 @@
   --sidebar-width: 200px;
   --header-height: 76px;
   --dur-ui: 220ms;
+  --dur-hover: 400ms;
   --dur-panel: 600ms;
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -407,16 +408,37 @@ textarea {
   gap: 10px;
   min-width: 0;
 }
+.order-row,
+.product-row,
+.detail-products__row {
+  position: relative;
+}
+.order-row::after,
+.product-row::after,
+.detail-products__row::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 12px 30px #2b455326;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-hover) var(--ease);
+}
+.order-row:focus-within,
+.product-row:focus-within {
+  z-index: 1;
+}
+.order-row:focus-within::after,
+.product-row:focus-within::after {
+  opacity: 1;
+}
 .order-row {
   display: flex;
   min-height: 74px;
   border: 1px solid var(--border);
   border-radius: 4px;
   background: #fff;
-  position: relative;
-  transition:
-    box-shadow 400ms var(--ease),
-    border-color 400ms;
 }
 .order-row__open {
   display: grid;
@@ -579,6 +601,7 @@ textarea {
   padding: 12px 30px;
   min-height: 66px;
   border-top: 1px solid #e9eef0;
+  transition: background-color var(--dur-hover) var(--ease);
 }
 .detail-products__row img {
   object-fit: contain;
@@ -640,8 +663,9 @@ select {
 }
 .products-scroll {
   overflow-x: auto;
-  max-width: 100%;
-  padding-bottom: 14px;
+  max-width: calc(100% + 32px);
+  margin: -16px;
+  padding: 16px 16px 30px;
   scrollbar-color: #c3d1d7 #e7edf0;
   scrollbar-width: thin;
 }
@@ -776,6 +800,14 @@ select {
 .dialog--delete {
   width: min(790px, calc(100vw - 40px));
 }
+.dialog--delete[open] {
+  display: flex;
+  flex-direction: column;
+}
+.dialog--delete .dialog__title {
+  flex-shrink: 0;
+  margin-bottom: 32px;
+}
 .dialog__actions {
   display: flex;
   gap: 14px;
@@ -787,30 +819,66 @@ select {
 .dialog__actions--green {
   background: var(--green);
   margin: 0;
-  padding-block: 26px;
+  padding: 26px 36px 34px;
+  flex-shrink: 0;
+  border-radius: 0 0 4px 4px;
+}
+.dialog__actions--green .button {
+  min-height: 52px;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+}
+.dialog__actions--green .button--delete {
+  min-width: 176px;
+  border-radius: 28px;
 }
 .delete-summary {
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  padding: 12px 36px 28px;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  border-top: 1px solid #e9eef0;
 }
-.delete-summary > svg {
-  color: var(--green-dark);
-  flex: 0 0 auto;
+.delete-summary__product {
+  display: grid;
+  grid-template-columns: 10px 80px minmax(0, 1fr);
+  align-items: center;
+  gap: 36px;
+  min-height: 62px;
+  padding: 8px 42px;
 }
-.delete-summary strong {
+.delete-summary__product + .delete-summary__product {
+  border-top: 1px solid #e9eef0;
+}
+.delete-summary__product img {
+  object-fit: contain;
+}
+.delete-summary__identity {
+  min-width: 0;
+}
+.delete-summary__identity span {
   display: block;
   overflow-wrap: anywhere;
   color: var(--ink);
-  font-weight: 400;
+  font-size: 15px;
   text-decoration: underline;
+  text-decoration-color: #b7c5ca;
   text-underline-offset: 4px;
 }
-.delete-summary p {
+.delete-summary__identity small {
+  display: block;
   font-size: 13px;
   color: var(--muted);
-  margin: 8px 0 0;
+  margin-top: 3px;
+}
+.delete-summary__empty {
+  margin: 0;
+  padding: 12px 36px 28px;
+  overflow-wrap: anywhere;
 }
 .record-form {
   padding-inline: 32px;
@@ -1037,9 +1105,18 @@ select {
   }
 }
 @media (hover: hover) and (pointer: fine) {
-  .order-row:hover {
-    border-color: #a7bac3;
-    box-shadow: 0 9px 22px #2b455312;
+  .order-row:hover,
+  .product-row:hover,
+  .detail-products__row:hover {
+    z-index: 1;
+  }
+  .order-row:hover::after,
+  .product-row:hover::after,
+  .detail-products__row:hover::after {
+    opacity: 1;
+  }
+  .detail-products__row:hover {
+    background-color: #f1f4f5;
   }
   .icon-button:hover {
     color: var(--ink);
@@ -1461,12 +1538,20 @@ select {
   .dialog__actions--green {
     margin: 0;
   }
-  .delete-summary {
-    padding: 0 22px 24px;
-    gap: 14px;
+  .dialog__actions--green .button--delete {
+    min-width: 0;
   }
-  .delete-summary svg {
-    width: 26px;
+  .delete-summary__product {
+    grid-template-columns: 9px 40px minmax(0, 1fr);
+    gap: 14px;
+    padding: 12px 22px;
+  }
+  .delete-summary__product img {
+    width: 40px;
+    height: 32px;
+  }
+  .delete-summary__empty {
+    padding: 0 22px 24px;
   }
   .notice {
     padding: 12px 16px;

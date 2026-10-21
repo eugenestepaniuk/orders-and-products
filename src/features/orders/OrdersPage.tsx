@@ -36,6 +36,7 @@ export function OrdersPage({ locale }: { locale: Locale }) {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<ApiCode | null>(null);
   const target = orders.find((order) => order.id === deleteId);
+  const targetProducts = target ? (summaries.get(target.id)?.products ?? []) : [];
 
   useEffect(() => {
     if (closingId === null || closingId !== selectedId) return;
@@ -211,19 +212,29 @@ export function OrdersPage({ locale }: { locale: Locale }) {
       {target && (
         <Modal
           title={t.deleteOrder}
+          description={`${target.title}. ${t.deleteHint}`}
           closeLabel={t.close}
           className="dialog--delete"
           onClose={() => {
             if (!deleting) setDeleteId(null);
           }}
         >
-          <div className="delete-summary">
-            <Icon name="box" size={36} />
-            <div>
-              <strong>{target.title}</strong>
-              <p>{t.deleteHint}</p>
-            </div>
-          </div>
+          {targetProducts.length ? (
+            <ul className="delete-summary" aria-label={t.products}>
+              {targetProducts.map((product) => (
+                <li className="delete-summary__product" key={product.id}>
+                  <span className="status-dot" aria-hidden="true" />
+                  <Image src={product.photo} width={52} height={38} alt="" unoptimized />
+                  <div className="delete-summary__identity">
+                    <span>{product.title}</span>
+                    <small>SN-{product.serialNumber}</small>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="delete-summary__empty">{target.title}</p>
+          )}
           {error && (
             <p className="form-error" role="alert">
               {t[error]}
