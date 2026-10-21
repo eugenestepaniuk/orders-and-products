@@ -1,0 +1,12 @@
+.git
+node_modules
+.next
+.env
+.env.*
+.qa
+test-results
+notes
+coverage
+*.log
+.DS_Store
+/docs/

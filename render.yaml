@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: orders-and-products
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: PORT
+        value: '10000'
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DEMO_USERNAME
+        value: demo
+      - key: DEMO_PASSWORD
+        generateValue: true
+      - key: ALLOW_DEMO_SEED
+        value: '1'
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL_MODE
+        value: verify
+      - key: DATABASE_SSL_CA
+        sync: false
